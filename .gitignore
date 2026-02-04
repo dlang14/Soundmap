@@ -1,0 +1,12 @@
+# Xcode
+DerivedData/
+*.xcuserstate
+*.xcuserdata/
+
+# SwiftPM
+.build/
+.swiftpm/
+
+# iOS
+*.ipa
+*.dSYM
