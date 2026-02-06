@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import Combine
+import SwiftUI
 
 @MainActor
 final class SongDropStore: ObservableObject {
@@ -13,6 +14,7 @@ final class SongDropStore: ObservableObject {
 
     @Published private(set) var drops: [SongDrop] = []
     @Published var lastPickup: Pickup?
+    @Published var isShowingSlotAnimation: Bool = false
     @Published var lastClaimError: String?
 
     private var lastUserLocation: CLLocation?
@@ -28,6 +30,7 @@ final class SongDropStore: ObservableObject {
 
     private var lastSpawnCenter: CLLocation?
     private var isAwarding = false
+    private var slotAnimationStartTime: Date?
 
     init(trackProvider: TrackProvider) {
         self.trackProvider = trackProvider
@@ -71,6 +74,13 @@ final class SongDropStore: ObservableObject {
 
         // Mark collected immediately to prevent double-claims
         drops[idx].isCollected = true
+
+        DispatchQueue.main.async {
+            withAnimation(.easeInOut(duration: 1.0)) {
+                self.isShowingSlotAnimation = true
+            }
+            self.slotAnimationStartTime = Date()
+        }
 
         Task {
             await awardSong(for: dropID)
@@ -118,12 +128,36 @@ final class SongDropStore: ObservableObject {
 
         do {
             let song = try await trackProvider.fetchRandomSong(excluding: [])
-            lastPickup = Pickup(song: song, dropID: dropID, pickedUpAt: Date())
+
+            let elapsed: TimeInterval
+            if let start = slotAnimationStartTime {
+                elapsed = Date().timeIntervalSince(start)
+            } else {
+                elapsed = 0
+            }
+
+            let delayDuration = max(0, 1.5 - elapsed)
+            if delayDuration > 0 {
+                try? await Task.sleep(nanoseconds: UInt64(delayDuration * 1_000_000_000))
+            }
+
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut(duration: 1.0)) {
+                    self.isShowingSlotAnimation = false
+                }
+                self.lastPickup = Pickup(song: song, dropID: dropID, pickedUpAt: Date())
+            }
         } catch {
             // If awarding fails, un-collect so user can try again
             if let i = drops.firstIndex(where: { $0.id == dropID }) {
                 drops[i].isCollected = false
             }
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut(duration: 1.0)) {
+                    self.isShowingSlotAnimation = false
+                }
+            }
         }
     }
 }
+
