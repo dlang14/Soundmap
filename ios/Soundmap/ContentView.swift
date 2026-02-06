@@ -5,34 +5,42 @@ struct ContentView: View {
     @EnvironmentObject var dropStore: SongDropStore
 
     var body: some View {
-        TabView {
-            MapScreen()
-                .tabItem {
-                    Label("Map", systemImage: "map")
-                }
+        ZStack {
+            TabView {
+                MapScreen()
+                    .tabItem {
+                        Label("Map", systemImage: "map")
+                    }
 
-            ProfileView()
-                .tabItem {
-                    Label("Collection", systemImage: "music.note.list")
-                }
-        }
-        .sheet(item: $dropStore.lastPickup, onDismiss: {
-            dropStore.lastPickup = nil
-        }) { pickup in
-            PickupSheet(pickup: pickup)
-        }
-        .alert(
-            "Can't claim yet",
-            isPresented: Binding(
-                get: { dropStore.lastClaimError != nil },
-                set: { if !$0 { dropStore.lastClaimError = nil } }
-            )
-        ) {
-            Button("OK") {
-                dropStore.lastClaimError = nil
+                ProfileView()
+                    .tabItem {
+                        Label("Collection", systemImage: "music.note.list")
+                    }
             }
-        } message: {
-            Text(dropStore.lastClaimError ?? "")
+            .sheet(item: $dropStore.lastPickup, onDismiss: {
+                dropStore.lastPickup = nil
+            }) { pickup in
+                PickupSheet(pickup: pickup)
+            }
+            .alert(
+                "Can't claim yet",
+                isPresented: Binding(
+                    get: { dropStore.lastClaimError != nil },
+                    set: { if !$0 { dropStore.lastClaimError = nil } }
+                )
+            ) {
+                Button("OK") {
+                    dropStore.lastClaimError = nil
+                }
+            } message: {
+                Text(dropStore.lastClaimError ?? "")
+            }
+
+            if dropStore.isShowingSlotAnimation {
+                SlotMachineAnimationView()
+                    .transition(.opacity)
+                    .zIndex(1000)
+            }
         }
     }
 }
@@ -62,5 +70,5 @@ private struct MapScreen: View {
     ContentView()
         .environmentObject(LocationManager())
         .environmentObject(CollectedSongStore())
-        .environmentObject(SongDropStore(trackProvider: MockTrackProvider()))
+        .environmentObject(SongDropStore(trackProvider: ITunesTrackProvider()))
 }

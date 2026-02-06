@@ -112,5 +112,5 @@ private struct DropMarkerView: View {
 #Preview {
     UserMapView(recenterToken: .constant(UUID()))
         .environmentObject(LocationManager())
-        .environmentObject(SongDropStore(trackProvider: MockTrackProvider()))
+        .environmentObject(SongDropStore(trackProvider: ITunesTrackProvider()))
 }

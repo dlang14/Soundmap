@@ -5,7 +5,7 @@ struct SoundmapApp: App {
     @StateObject private var locationManager = LocationManager()
     @StateObject private var collectedStore = CollectedSongStore()
     @StateObject private var dropStore = SongDropStore(
-        trackProvider: MockTrackProvider() // swap to BackendTrackProvider(...) later
+        trackProvider: ITunesTrackProvider() // swap to BackendTrackProvider(...) later
     )
 
     var body: some Scene {
