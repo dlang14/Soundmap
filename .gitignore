@@ -10,3 +10,5 @@ DerivedData/
 # iOS
 *.ipa
 *.dSYM
+
+.DS_Store
